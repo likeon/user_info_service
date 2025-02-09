@@ -1,0 +1,54 @@
+name: Build Binaries
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [ linux, windows, darwin ]
+        goarch: [ amd64 ]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.23
+
+      - name: Install build dependencies
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Build the binary
+        run: |
+          mkdir -p build/${{ matrix.goos }}_${{ matrix.goarch }}
+
+          # On Windows, we typically name the executable .exe
+          BINARY_NAME="user_info_service"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY_NAME="user_info_service.exe"
+          fi
+
+          # Enable CGO since go-sqlite3 requires it
+          export CGO_ENABLED=1
+          export GOOS=${{ matrix.goos }}
+          export GOARCH=${{ matrix.goarch }}
+
+          go build -o build/${{ matrix.goos }}_${{ matrix.goarch }}/${BINARY_NAME} .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: user_info_service-${{ matrix.goos }}_${{ matrix.goarch }}
+          path: build/${{ matrix.goos }}_${{ matrix.goarch }}

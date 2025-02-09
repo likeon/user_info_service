@@ -1,0 +1,5 @@
+bin
+*.test
+.devbox
+users.db
+pkg
