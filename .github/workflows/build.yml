@@ -69,23 +69,11 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
 
     steps:
-      - name: Download Linux Artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v4.1.8
-        with:
-          name: user-info-service-linux-amd64
-          path: .
 
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v4.1.8
-        with:
-          name: user-info-service-windows-amd64
-          path: .
-
-      - name: Download Mac Artifact
-        uses: actions/download-artifact@v4.1.8
-        with:
-          name: user-info-service-darwin-amd64
-          path: .
+      - name: test
+        run: ls -la
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
@@ -93,6 +81,6 @@ jobs:
           files: |
             user-info-service-linux-amd64
             user-info-service-darwin-amd64
-            user-info-service_windows_amd64.exe
+            user-info-service-windows-amd64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
