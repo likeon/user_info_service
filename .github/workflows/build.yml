@@ -1,4 +1,4 @@
-name: Build Binaries
+name: Build Binaries (Separate OS Runners)
 
 on:
   push:
@@ -7,48 +7,54 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        goos: [ linux, windows, darwin ]
-        goarch: [ amd64 ]
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.23
-
-      - name: Install build dependencies
-        if: matrix.goos == 'linux'
+      - name: Install build deps (for go-sqlite3 on Linux)
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential
-
-      - name: Build the binary
+      - name: Build (linux/amd64)
         run: |
-          mkdir -p build/${{ matrix.goos }}_${{ matrix.goarch }}
-
-          # On Windows, we typically name the executable .exe
-          BINARY_NAME="user_info_service"
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            BINARY_NAME="user_info_service.exe"
-          fi
-
-          # Enable CGO since go-sqlite3 requires it
-          export CGO_ENABLED=1
-          export GOOS=${{ matrix.goos }}
-          export GOARCH=${{ matrix.goarch }}
-
-          go build -o build/${{ matrix.goos }}_${{ matrix.goarch }}/${BINARY_NAME} .
-
-      - name: Upload build artifacts
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o user-info-service_linux_amd64 .
+      - name: Upload Artifact (Linux)
         uses: actions/upload-artifact@v4.6.0
         with:
-          name: user_info_service-${{ matrix.goos }}_${{ matrix.goarch }}
-          path: build/${{ matrix.goos }}_${{ matrix.goarch }}
+          name: user-info-service-linux-amd64
+          path: user-info-service_linux_amd64
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.23
+      - name: Build (windows/amd64)
+        run: |
+          go build -o user-info-service_windows_amd64.exe .
+      - name: Upload Artifact (Windows)
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: user-info-service-windows-amd64
+          path: user-info-service_windows_amd64.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.23
+      - name: Build (darwin/amd64)
+        run: |
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o user-info-service_darwin_amd64 .
+      - name: Upload Artifact (Mac)
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: user-info-service-darwin-amd64
+          path: user-info-service_darwin_amd64
