@@ -3,6 +3,7 @@ name: Build Binaries (Separate OS Runners)
 on:
   push:
     branches: [ "main" ]
+    tags: [ "*" ]
   pull_request:
     branches: [ "main" ]
 
@@ -58,3 +59,62 @@ jobs:
         with:
           name: user-info-service-darwin-amd64
           path: user-info-service_darwin_amd64
+  
+  release:
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: user-info-service-linux-amd64
+          path: .
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: user-info-service-windows-amd64
+          path: .
+
+      - name: Download Mac Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: user-info-service-darwin-amd64
+          path: .
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          release_name: "Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset (Linux)
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./user-info-service_linux_amd64
+          asset_name: user-info-service_linux_amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Windows)
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./user-info-service_windows_amd64.exe
+          asset_name: user-info-service_windows_amd64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS)
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./user-info-service_darwin_amd64
+          asset_name: user-info-service_darwin_amd64
+          asset_content_type: application/octet-stream
