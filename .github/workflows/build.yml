@@ -68,19 +68,19 @@ jobs:
 
     steps:
       - name: Download Linux Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.8
         with:
           name: user-info-service-linux-amd64
           path: .
 
       - name: Download Windows Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.8
         with:
           name: user-info-service-windows-amd64
           path: .
 
       - name: Download Mac Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.8
         with:
           name: user-info-service-darwin-amd64
           path: .
